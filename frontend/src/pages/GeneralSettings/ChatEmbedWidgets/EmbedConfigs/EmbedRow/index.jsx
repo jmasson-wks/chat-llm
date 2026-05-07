@@ -4,7 +4,7 @@ import showToast from "@/utils/toast";
 import { useModal } from "@/hooks/useModal";
 import ModalWrapper from "@/components/ModalWrapper";
 import Embed from "@/models/embed";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import { nFormatter } from "@/utils/numbers";
 import EditEmbedModal from "./EditEmbedModal";
 import CodeSnippetModal from "./CodeSnippetModal";
@@ -72,7 +72,8 @@ export default function EmbedRow({ embed }) {
           className="px-6 whitespace-nowrap flex item-center gap-x-1"
         >
           <a
-            href={paths.workspace.chat(embed.workspace.slug)}
+            // [base-path] withBase: <a href> bypasses React Router basename
+            href={withBase(paths.workspace.chat(embed.workspace.slug))}
             target="_blank"
             rel="noreferrer"
             className="text-white flex items-center hover:underline"

@@ -18,7 +18,14 @@ const handledEvents = [
 
 export function websocketURI() {
   const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  if (API_BASE === "/api") return `${wsProtocol}//${window.location.host}`;
+  // [base-path] If API_BASE is a relative path (e.g. "/api" or "/ia/api"), the
+  // WebSocket connects to the same host the page is served from. Previously
+  // only the literal "/api" was special-cased here; with a sub-path build
+  // (`API_BASE === "/ia/api"`) the original code fell through to `new URL(...)`
+  // which throws on relative URLs. Detecting any leading slash fixes it.
+  if (API_BASE.startsWith("/"))
+    return `${wsProtocol}//${window.location.host}`;
+  // Absolute URL (e.g. http://localhost:3001/api in dev): extract host.
   return `${wsProtocol}//${new URL(import.meta.env.VITE_API_BASE).host}`;
 }
 

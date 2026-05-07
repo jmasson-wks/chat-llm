@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Workspace from "@/models/workspace";
 import LoadingChat from "./LoadingChat";
 import ChatContainer from "./ChatContainer";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import ModalWrapper from "../ModalWrapper";
 import { useParams } from "react-router-dom";
 import { DnDFileUploaderProvider } from "./ChatContainer/DnDWrapper";
@@ -71,7 +71,8 @@ export default function WorkspaceChat({ loading, workspace }) {
               </div>
               <div className="flex w-full justify-end items-center p-6 space-x-2 border-t border-theme-modal-border rounded-b">
                 <a
-                  href={paths.home()}
+                  // [base-path] withBase: <a href> bypasses React Router basename
+                  href={withBase(paths.home())}
                   className="transition-all duration-300 bg-white text-black hover:opacity-60 px-4 py-2 rounded-lg text-sm"
                 >
                   Return to homepage

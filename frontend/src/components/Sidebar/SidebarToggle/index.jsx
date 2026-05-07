@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { SidebarSimple } from "@phosphor-icons/react";
 import paths from "@/utils/paths";
+import { useLocation } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 const SIDEBAR_TOGGLE_STORAGE_KEY = "anythingllm_sidebar_toggle";
 export const SIDEBAR_TOGGLE_EVENT = "sidebar-toggle";
@@ -21,10 +22,15 @@ function previousSidebarState() {
 export function useSidebarToggle() {
   const [showSidebar, setShowSidebar] = useState(previousSidebarState());
   const [canToggleSidebar, setCanToggleSidebar] = useState(true);
+  // [base-path] useLocation() strips the basename automatically, so the regexes
+  // and `paths.home()` comparison below stay valid under any BASE_PATH.
+  // window.location.pathname would include the basename (e.g. "/ia/workspace/foo")
+  // and break the comparisons.
+  const location = useLocation();
 
   useEffect(() => {
     function checkPath() {
-      const currentPath = window.location.pathname;
+      const currentPath = location.pathname;
       const isVisible =
         currentPath === paths.home() ||
         /^\/workspace\/[^\/]+$/.test(currentPath) ||
@@ -32,7 +38,7 @@ export function useSidebarToggle() {
       setCanToggleSidebar(isVisible);
     }
     checkPath();
-  }, [window.location.pathname]);
+  }, [location.pathname]);
 
   useEffect(() => {
     function toggleSidebar(e) {

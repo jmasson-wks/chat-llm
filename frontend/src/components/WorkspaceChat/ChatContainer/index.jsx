@@ -24,7 +24,7 @@ import SpeechRecognition, {
 import { ChatTooltips } from "./ChatTooltips";
 import { MetricsProvider } from "./ChatHistory/HistoricalMessage/Actions/RenderMetrics";
 import useChatContainerQuickScroll from "@/hooks/useChatContainerQuickScroll";
-import { PENDING_HOME_MESSAGE } from "@/utils/constants";
+import { API_BASE, PENDING_HOME_MESSAGE } from "@/utils/constants";
 import { clearPromptInputDraft } from "@/hooks/usePromptInputStorage";
 import { safeJsonParse } from "@/utils/request";
 import { useTranslation } from "react-i18next";
@@ -284,8 +284,12 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
     function handleWSS() {
       try {
         if (!socketId || !!websocket) return;
+        // [base-path] The agent WebSocket is mounted under the API router, which
+        // itself sits under BASE_PATH. Use API_BASE (= "/ia/api" when deployed
+        // under "/ia/", or "/api" by default) so the WS path always tracks the
+        // server's mount point — never hardcode "/api" here.
         socket = new WebSocket(
-          `${websocketURI()}/api/agent-invocation/${socketId}`
+          `${websocketURI()}${API_BASE}/agent-invocation/${socketId}`
         );
         socket.supportsAgentStreaming = false;
 

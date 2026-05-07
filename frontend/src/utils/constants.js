@@ -76,8 +76,15 @@ export const LEMONADE_COMMON_URLS = [
 ];
 
 export function fullApiUrl() {
-  if (API_BASE !== "/api") return API_BASE;
-  return `${window.location.origin}/api`;
+  // [base-path] When API_BASE is relative (e.g. "/api" or "/ia/api") we need
+  // to build a fully-qualified URL because callers feed the result into
+  // `new URL(...)` which throws on relative inputs. Previously only "/api"
+  // got the origin prepended; sub-path builds (API_BASE === "/ia/api") would
+  // return a bare relative path and crash in `models/system.js`,
+  // `models/workspace.js`, and the BrowserExtension API key helpers.
+  if (API_BASE.startsWith("/")) return `${window.location.origin}${API_BASE}`;
+  // Already absolute (dev mode: http://localhost:3001/api).
+  return API_BASE;
 }
 
 export const POPUP_BROWSER_EXTENSION_EVENT = "NEW_BROWSER_EXTENSION_CONNECTION";

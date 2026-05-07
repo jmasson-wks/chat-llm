@@ -3,7 +3,7 @@ import Sidebar from "@/components/SettingsSidebar";
 import { isMobile } from "react-device-detect";
 import showToast from "@/utils/toast";
 import System from "@/models/system";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import { AUTH_TIMESTAMP, AUTH_TOKEN, AUTH_USER } from "@/utils/constants";
 import PreLoader from "@/components/Preloader";
 import CTAButton from "@/components/lib/CTAButton";
@@ -63,7 +63,8 @@ function MultiUserMode() {
           window.localStorage.removeItem(AUTH_USER);
           window.localStorage.removeItem(AUTH_TOKEN);
           window.localStorage.removeItem(AUTH_TIMESTAMP);
-          window.location = paths.settings.users();
+          // [base-path] withBase: bypasses React Router → must include BASE_URL.
+          window.location = withBase(paths.settings.users());
         }, 2_000);
         return;
       }

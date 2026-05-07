@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import useLogo from "@/hooks/useLogo";
 import {
   House,
@@ -97,7 +97,8 @@ export default function SettingsSidebar() {
                 </div>
                 <div className="flex gap-x-2 items-center text-slate-500 shrink-0">
                   <a
-                    href={paths.home()}
+                    // [base-path] withBase: <a href> bypasses React Router basename
+                    href={withBase(paths.home())}
                     className="transition-all duration-300 p-2 rounded-full text-white bg-theme-action-menu-bg hover:bg-theme-action-menu-item-hover hover:border-slate-100 hover:border-opacity-50 border-transparent border"
                   >
                     <House className="h-4 w-4" />

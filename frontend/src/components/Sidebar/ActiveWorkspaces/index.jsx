@@ -5,7 +5,7 @@ import Workspace from "@/models/workspace";
 import ManageWorkspace, {
   useManageWorkspaceModal,
 } from "../../Modals/ManageWorkspace";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import { useParams, useNavigate, useMatch } from "react-router-dom";
 import { GearSix, UploadSimple, DotsSixVertical } from "@phosphor-icons/react";
 import useUser from "@/hooks/useUser";
@@ -118,10 +118,11 @@ export default function ActiveWorkspaces() {
                     >
                       <div className="flex gap-x-2 items-center justify-between">
                         <a
+                          // [base-path] withBase: <a href> bypasses React Router basename
                           href={
                             isActive
                               ? null
-                              : paths.workspace.chat(workspace.slug)
+                              : withBase(paths.workspace.chat(workspace.slug))
                           }
                           aria-current={isActive ? "page" : ""}
                           className={`

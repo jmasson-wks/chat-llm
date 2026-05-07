@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { FullScreenLoader } from "@/components/Preloader";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import useQuery from "@/hooks/useQuery";
 import System from "@/models/system";
 import { AUTH_TIMESTAMP, AUTH_TOKEN, AUTH_USER } from "@/utils/constants";
 
 export default function SimpleSSOPassthrough() {
   const query = useQuery();
-  const redirectPath = query.get("redirectTo") || paths.home();
+  // [base-path] withBase: redirectPath can be an internal path or a full URL.
+  // withBase() passes through absolute URLs and only prefixes internal paths.
+  const redirectPath = withBase(query.get("redirectTo") || paths.home());
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(null);
 

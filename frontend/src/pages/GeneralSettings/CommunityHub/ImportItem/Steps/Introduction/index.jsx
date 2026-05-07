@@ -1,6 +1,6 @@
 import CommunityHubImportItemSteps from "..";
 import CTAButton from "@/components/lib/CTAButton";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import showToast from "@/utils/toast";
 import { useState } from "react";
 
@@ -39,7 +39,8 @@ export default function Introduction({ settings, setSettings, setStep }) {
               If you are pulling in a private item, make sure it is{" "}
               <b>shared with a team</b> you belong to, and you have added a{" "}
               <a
-                href={paths.communityHub.authentication()}
+                // [base-path] withBase: <a href> bypasses React Router basename
+                href={withBase(paths.communityHub.authentication())}
                 className="underline text-yellow-100 light:text-orange-500 font-semibold"
               >
                 Connection Key.

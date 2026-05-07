@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FullScreenLoader } from "@/components/Preloader";
 import System from "@/models/system";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 
 /**
  * Protects the view from system set ups who cannot view chat history.
@@ -12,7 +12,8 @@ export function CanViewChatHistory({ children }) {
   const { loading, viewable } = useCanViewChatHistory();
   if (loading) return <FullScreenLoader />;
   if (!viewable) {
-    window.location.href = paths.home();
+    // [base-path] withBase: bypasses React Router → must include BASE_URL.
+    window.location.href = withBase(paths.home());
     return <FullScreenLoader />;
   }
 

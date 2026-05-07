@@ -42,6 +42,10 @@ const {
   googleAgentSkillEndpoints,
 } = require("./endpoints/utils/googleAgentSkillEndpoints");
 const { httpLogger } = require("./middleware/httpLogger");
+// [base-path] Sub-path mount point. Empty string means "deploy at domain root"
+// (default). Otherwise BASE_PATH is something like "/ia" with no trailing
+// slash; see server/utils/basePath.js for normalization rules.
+const { BASE_PATH, joinBase } = require("./utils/basePath");
 const app = express();
 const apiRouter = express.Router();
 const FILE_LIMIT = "3GB";
@@ -73,7 +77,10 @@ if (!!process.env.ENABLE_HTTPS) {
   require("@mintplex-labs/express-ws").default(app); // load WebSockets in non-SSL mode.
 }
 
-app.use("/api", apiRouter);
+// [base-path] Mount the API router under BASE_PATH. The agent WebSocket and
+// every endpoint registered below attach to apiRouter, so they all inherit
+// the correct prefix automatically (no per-endpoint changes required).
+app.use(joinBase("/api"), apiRouter);
 systemEndpoints(apiRouter);
 extensionEndpoints(apiRouter);
 workspaceEndpoints(apiRouter);
@@ -107,7 +114,11 @@ if (process.env.NODE_ENV !== "development") {
   const { MetaGenerator } = require("./utils/boot/MetaGenerator");
   const IndexPage = new MetaGenerator();
 
+  // [base-path] When BASE_PATH is set, serve the static frontend under that
+  // prefix. e.g. "/ia/index.js" → "<public>/index.js". `joinBase("/")` returns
+  // "/" when no BASE_PATH is configured, preserving the original behavior.
   app.use(
+    BASE_PATH || "/",
     express.static(path.resolve(__dirname, "public"), {
       extensions: ["js"],
       setHeaders: (res) => {
@@ -118,17 +129,25 @@ if (process.env.NODE_ENV !== "development") {
     })
   );
 
-  app.get("/robots.txt", function (_, response) {
+  app.get(joinBase("/robots.txt"), function (_, response) {
     response.type("text/plain");
     response.send("User-agent: *\nDisallow: /").end();
   });
 
-  app.get("/manifest.json", async function (_, response) {
+  app.get(joinBase("/manifest.json"), async function (_, response) {
     IndexPage.generateManifest(response);
     return;
   });
 
-  app.use("/", function (_, response) {
+  // [base-path] Convenience redirect: when BASE_PATH is set, hitting "/" on
+  // the container should send the user to "/ia/" rather than 404. Skipped
+  // when no BASE_PATH is configured (otherwise we'd redirect to ourselves).
+  if (BASE_PATH) {
+    app.get("/", (_, response) => response.redirect(`${BASE_PATH}/`));
+  }
+
+  // SPA catch-all: serve the generated HTML on any URL within BASE_PATH.
+  app.use(BASE_PATH || "/", function (_, response) {
     IndexPage.generate(response);
     return;
   });

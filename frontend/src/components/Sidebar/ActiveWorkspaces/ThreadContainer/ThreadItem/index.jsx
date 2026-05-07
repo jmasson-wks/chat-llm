@@ -1,6 +1,6 @@
 import useScrollActiveItemIntoView from "@/hooks/useScrollActiveItemIntoView";
 import Workspace from "@/models/workspace";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import showToast from "@/utils/toast";
 import {
   ArrowCounterClockwise,
@@ -98,8 +98,13 @@ export default function ThreadItem({
         ) : (
           <a
             ref={ref}
+            // [base-path] withBase: <a href> bypasses React Router basename;
+            // also compare against the prefixed path so the "#" guard works
+            // under sub-path deployments (window.location.pathname is prefixed).
             href={
-              window.location.pathname === linkTo || ctrlPressed ? "#" : linkTo
+              window.location.pathname === withBase(linkTo) || ctrlPressed
+                ? "#"
+                : withBase(linkTo)
             }
             data-tooltip-id="workspace-thread-name"
             data-tooltip-content={thread.name}
@@ -250,7 +255,8 @@ function OptionsMenu({
       onRemove(thread.id);
       // Redirect if deleting the active thread
       if (currentThreadSlug === thread.slug) {
-        window.location.href = paths.workspace.chat(workspace.slug);
+        // [base-path] withBase: bypasses React Router → must include BASE_URL.
+        window.location.href = withBase(paths.workspace.chat(workspace.slug));
       }
       return;
     }

@@ -1,6 +1,11 @@
 const prisma = require("../utils/prisma");
 const { v4: uuidv4 } = require("uuid");
 const ip = require("ip");
+// [base-path] connectionURL() returns a URL that the frontend appends to
+// `window.location.origin` to display a QR code. With a sub-path deployment
+// the prefix must be included, otherwise the mobile app receives a URL that
+// bypasses the IIS rewrite rule.
+const { joinBase } = require("../utils/basePath");
 
 /**
  * @typedef {Object} TemporaryMobileDeviceRequest
@@ -97,10 +102,14 @@ const MobileDevice = {
    * @returns {string}
    */
   connectionURL: function (user = null) {
-    let baseUrl = "/api/mobile";
-    if (process.env.NODE_ENV === "production") baseUrl = "/api/mobile";
+    // [base-path] joinBase("/api/mobile") yields "/api/mobile" when no
+    // BASE_PATH is configured (default behavior preserved) or
+    // "/ia/api/mobile" when deployed under "/ia".
+    const apiPath = joinBase("/api/mobile");
+    let baseUrl = apiPath;
+    if (process.env.NODE_ENV === "production") baseUrl = apiPath;
     else
-      baseUrl = `http://${ip.address()}:${process.env.SERVER_PORT || 3001}/api/mobile`;
+      baseUrl = `http://${ip.address()}:${process.env.SERVER_PORT || 3001}${apiPath}`;
 
     const tempToken = this.registerTempToken(user);
     baseUrl = `${baseUrl}?t=${tempToken}`;

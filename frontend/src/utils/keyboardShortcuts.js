@@ -1,4 +1,4 @@
-import paths from "./paths";
+import paths, { withBase } from "./paths";
 import { useEffect } from "react";
 import { userFromStorage } from "./request";
 import { TOGGLE_LLM_SELECTOR_EVENT } from "@/components/WorkspaceChat/ChatContainer/PromptInput/LLMSelector/action";
@@ -9,37 +9,38 @@ export const SHORTCUTS = {
   "⌘ + ,": {
     translationKey: "settings",
     action: () => {
-      window.location.href = paths.settings.interface();
+      // [base-path] withBase: bypasses React Router → must include BASE_URL.
+      window.location.href = withBase(paths.settings.interface());
     },
   },
   "⌘ + H": {
     translationKey: "home",
     action: () => {
-      window.location.href = paths.home();
+      window.location.href = withBase(paths.home());
     },
   },
   "⌘ + I": {
     translationKey: "workspaces",
     action: () => {
-      window.location.href = paths.settings.workspaces();
+      window.location.href = withBase(paths.settings.workspaces());
     },
   },
   "⌘ + K": {
     translationKey: "apiKeys",
     action: () => {
-      window.location.href = paths.settings.apiKeys();
+      window.location.href = withBase(paths.settings.apiKeys());
     },
   },
   "⌘ + L": {
     translationKey: "llmPreferences",
     action: () => {
-      window.location.href = paths.settings.llmPreference();
+      window.location.href = withBase(paths.settings.llmPreference());
     },
   },
   "⌘ + Shift + C": {
     translationKey: "chatSettings",
     action: () => {
-      window.location.href = paths.settings.chat();
+      window.location.href = withBase(paths.settings.chat());
     },
   },
   "⌘ + Shift + ?": {

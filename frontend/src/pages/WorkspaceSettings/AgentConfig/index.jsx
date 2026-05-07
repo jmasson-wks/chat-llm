@@ -7,7 +7,7 @@ import AgentLLMSelection from "./AgentLLMSelection";
 import Admin from "@/models/admin";
 import * as Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import useUser from "@/hooks/useUser";
 
 export default function WorkspaceAgentConfiguration({ workspace }) {
@@ -91,7 +91,8 @@ export default function WorkspaceAgentConfiguration({ workspace }) {
               <div className="flex flex-col gap-y-4">
                 <a
                   className="w-fit transition-all duration-300 border border-slate-200 px-5 py-2.5 rounded-lg text-white text-sm items-center flex gap-x-2 hover:bg-slate-200 hover:text-slate-800 focus:ring-gray-800"
-                  href={paths.settings.agentSkills()}
+                  // [base-path] withBase: <a href> bypasses React Router basename
+                  href={withBase(paths.settings.agentSkills())}
                 >
                   Configure Agent Skills
                 </a>

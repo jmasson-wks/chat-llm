@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { X } from "@phosphor-icons/react";
 import Workspace from "@/models/workspace";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import { useTranslation } from "react-i18next";
 import ModalWrapper from "@/components/ModalWrapper";
 
@@ -18,7 +18,8 @@ export default function NewWorkspaceModal({ hideModal = noop }) {
     for (var [key, value] of form.entries()) data[key] = value;
     const { workspace, message } = await Workspace.new(data);
     if (!!workspace) {
-      window.location.href = paths.workspace.chat(workspace.slug);
+      // [base-path] withBase: bypasses React Router → must include BASE_URL.
+      window.location.href = withBase(paths.workspace.chat(workspace.slug));
     }
     setError(message);
   };

@@ -14,6 +14,12 @@ import "@/index.css";
 const isDev = import.meta.env.DEV;
 const REACTWRAP = isDev ? React.Fragment : React.StrictMode;
 
+// [base-path] React Router basename. `import.meta.env.BASE_URL` is filled by
+// Vite from the `base` option in vite.config.js (e.g. '/ia/'). React Router
+// expects no trailing slash, hence the strip.
+const ROUTER_BASENAME =
+  (import.meta.env.BASE_URL || "/").replace(/\/+$/, "") || "/";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -391,7 +397,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+], { basename: ROUTER_BASENAME });
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <REACTWRAP>

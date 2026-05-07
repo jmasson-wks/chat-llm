@@ -16,9 +16,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         unzip curl gnupg libgfortran5 libgbm1 tzdata netcat-openbsd \
         libasound2t64 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 \
-        libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libx11-6 libx11-xcb1 libxcb1 \
+        libgcc-s1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libx11-6 libx11-xcb1 libxcb1 \
         libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
-        libxss1 libxtst6 ca-certificates fonts-liberation libappindicator3-1 libnss3 lsb-release \
+        libxss1 libxtst6 ca-certificates fonts-liberation libayatana-appindicator3-1 libnss3 lsb-release \
         xdg-utils git build-essential ffmpeg && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
@@ -85,9 +85,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         curl gnupg libgfortran5 libgbm1 tzdata netcat-openbsd \
         libasound2t64 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 \
-        libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libx11-6 libx11-xcb1 libxcb1 \
+        libgcc-s1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libx11-6 libx11-xcb1 libxcb1 \
         libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
-        libxss1 libxtst6 ca-certificates fonts-liberation libappindicator3-1 libnss3 lsb-release \
+        libxss1 libxtst6 ca-certificates fonts-liberation libayatana-appindicator3-1 libnss3 lsb-release \
         xdg-utils git build-essential ffmpeg && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
@@ -139,6 +139,18 @@ WORKDIR /app
 # This avoids esbuild crashing under QEMU when cross-compiling.
 # The output (static HTML/CSS/JS) is platform-independent.
 FROM --platform=$BUILDPLATFORM node:18-slim AS frontend-build
+# [base-path] BASE_PATH controls where the SPA is mounted (default: "/").
+# Vite REQUIRES a trailing slash on its `base` option, so the value passed
+# here MUST end with "/". The compose file sets it to "/ia/" for our IIS
+# subpath deployment. Re-declared here because each Docker stage scopes ARGs
+# independently.
+ARG BASE_PATH=/
+ENV VITE_BASE_URL=$BASE_PATH
+# VITE_API_BASE = "${BASE_PATH}api". When BASE_PATH=/ → "/api" (default).
+# When BASE_PATH=/ia/ → "/ia/api". Vite's `define` injects this into the
+# bundle as `import.meta.env.VITE_API_BASE` and it becomes `API_BASE` at
+# runtime (see frontend/src/utils/constants.js).
+ENV VITE_API_BASE=${BASE_PATH}api
 WORKDIR /app/frontend
 COPY ./frontend/package.json ./frontend/yarn.lock ./
 RUN yarn install --network-timeout 100000 && yarn cache clean
@@ -172,6 +184,13 @@ COPY --chown=anythingllm:anythingllm --from=frontend-build /app/frontend/dist /a
 ENV NODE_ENV=production
 ENV ANYTHING_LLM_RUNTIME=docker
 ENV DEPLOYMENT_VERSION=1.12.1
+
+# [base-path] Server-side BASE_PATH (Express prefers no trailing slash, so the
+# compose file passes "/ia" here while the frontend gets "/ia/"). Empty value
+# preserves the default behaviour (deploy at the domain root).
+# Re-declared here because each Docker stage scopes ARGs independently.
+ARG BASE_PATH=""
+ENV BASE_PATH=$BASE_PATH
 
 # Setup the healthcheck
 HEALTHCHECK --interval=1m --timeout=10s --start-period=1m \

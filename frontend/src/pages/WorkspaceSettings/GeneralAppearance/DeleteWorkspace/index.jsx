@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import Workspace from "@/models/workspace";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import { useTranslation } from "react-i18next";
 import showToast from "@/utils/toast";
 
@@ -29,7 +29,8 @@ export default function DeleteWorkspace({ workspace }) {
     }
 
     workspace.slug === slug
-      ? (window.location = paths.home())
+      ? // [base-path] withBase: bypasses React Router → must include BASE_URL.
+        (window.location = withBase(paths.home()))
       : window.location.reload();
   };
   return (

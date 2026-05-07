@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import Admin from "@/models/admin";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import { LinkSimple, Trash } from "@phosphor-icons/react";
 
 export default function WorkspaceRow({ workspace, users: _users }) {
@@ -27,7 +27,8 @@ export default function WorkspaceRow({ workspace, users: _users }) {
         </th>
         <td className="px-6 flex items-center">
           <a
-            href={paths.workspace.chat(workspace.slug)}
+            // [base-path] withBase: <a href> bypasses React Router basename
+            href={withBase(paths.workspace.chat(workspace.slug))}
             target="_blank"
             rel="noreferrer"
             className="text-white flex items-center hover:underline"
@@ -37,7 +38,8 @@ export default function WorkspaceRow({ workspace, users: _users }) {
         </td>
         <td className="px-6">
           <a
-            href={paths.workspace.settings.members(workspace.slug)}
+            // [base-path] withBase: <a href> bypasses React Router basename
+            href={withBase(paths.workspace.settings.members(workspace.slug))}
             className="text-white flex items-center underline"
           >
             {workspace.userIds?.length}

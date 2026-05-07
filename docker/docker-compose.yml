@@ -6,26 +6,44 @@ networks:
 
 services:
   anything-llm:
-    container_name: anythingllm
+    container_name: nautilusllm
     build:
       context: ../.
       dockerfile: ./docker/Dockerfile
       args:
         ARG_UID: ${UID:-1000}
         ARG_GID: ${GID:-1000}
+        # [base-path] Subpath for IIS mounting. MUST end with a trailing
+        # slash (Vite requirement). To deploy at the domain root, set this
+        # back to "/" and also clear `environment.BASE_PATH` below.
+        # See IIS_SETUP.md for the matching IIS rewrite rule.
+        BASE_PATH: /ia/
     cap_add:
       - SYS_ADMIN
     volumes:
       - "./.env:/app/server/.env"
-      - "../server/storage:/app/server/storage"
-      - "../collector/hotdir/:/app/collector/hotdir"
-      - "../collector/outputs/:/app/collector/outputs"
+      - "/mnt/d/containers/anythingllm:/app/server/storage"
+      - "/mnt/d/containers/anythingllm/hotdir:/app/collector/hotdir"
+      - "/mnt/d/containers/anythingllm/outputs:/app/collector/outputs"
     user: "${UID:-1000}:${GID:-1000}"
+    # [base-path] Express runtime BASE_PATH. Differs from build.args.BASE_PATH
+    # by ONE character on purpose: no trailing slash here (Express convention).
+    # The server normalizes either form (see server/utils/basePath.js) but we
+    # keep the canonical form to make logs less noisy.
+    environment:
+      - BASE_PATH=/ia
+    # [base-path] Bind to the loopback interface only — the container is
+    # reachable from IIS (running on the same host) but not from anywhere
+    # else. Combined with the IIS reverse proxy, this means the only public
+    # entry point is HTTPS via the FQDN. Change to "3001:3001" if you want
+    # the container to be directly reachable on the LAN.
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     env_file:
       - .env
     networks:
       - anything-llm
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+

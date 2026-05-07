@@ -5,6 +5,16 @@
  * @property {string|null} content - Text content to be injected between tags. If null self-closing.
  */
 
+// [base-path] All hardcoded absolute paths in this file (favicon, manifest,
+// index.js/css, PWA start_url, ...) need to be prefixed with BASE_PATH so they
+// resolve correctly when AnythingLLM is mounted under a sub-path.
+const { BASE_PATH, joinBase } = require("../basePath");
+
+// [base-path] PWA start_url convention is to include a trailing slash so
+// installed apps open at the SPA root (e.g. "/ia/"), matching the redirect
+// installed in server/index.js. Falls back to "/" when no BASE_PATH is set.
+const PWA_START_URL = BASE_PATH ? `${BASE_PATH}/` : "/";
+
 /**
  * This class serves the default index.html page that is not present when built in production.
  * and therefore this class should not be called when in development mode since it is unused.
@@ -26,15 +36,18 @@ class MetaGenerator {
   /** @type {MetaTagDefinition[]|null} */
   #customConfig = null;
 
+  // [base-path] Default manifest used as a fallback when DB read fails.
+  // start_url and the favicon src must include BASE_PATH so the installed
+  // PWA opens at "/ia/" instead of the domain root.
   #defaultManifest = {
     name: "AnythingLLM",
     short_name: "AnythingLLM",
     display: "standalone",
     orientation: "portrait",
-    start_url: "/",
+    start_url: PWA_START_URL,
     icons: [
       {
-        src: "/favicon.png",
+        src: joinBase("/favicon.png"),
         sizes: "any",
       },
     ],
@@ -50,10 +63,12 @@ class MetaGenerator {
   }
 
   #defaultMeta() {
+    // [base-path] Internal asset paths (/favicon.png, /manifest.json) below
+    // are wrapped with joinBase() so they resolve under BASE_PATH at runtime.
     return [
       {
         tag: "link",
-        props: { type: "image/svg+xml", href: "/favicon.png" },
+        props: { type: "image/svg+xml", href: joinBase("/favicon.png") },
         content: null,
       },
       {
@@ -138,8 +153,11 @@ class MetaGenerator {
         },
       },
 
-      { tag: "link", props: { rel: "icon", href: "/favicon.png" } },
-      { tag: "link", props: { rel: "apple-touch-icon", href: "/favicon.png" } },
+      { tag: "link", props: { rel: "icon", href: joinBase("/favicon.png") } },
+      {
+        tag: "link",
+        props: { rel: "apple-touch-icon", href: joinBase("/favicon.png") },
+      },
 
       // PWA specific tags
       {
@@ -157,7 +175,10 @@ class MetaGenerator {
           content: "black-translucent",
         },
       },
-      { tag: "link", props: { rel: "manifest", href: "/manifest.json" } },
+      {
+        tag: "link",
+        props: { rel: "manifest", href: joinBase("/manifest.json") },
+      },
     ];
   }
 
@@ -188,12 +209,14 @@ class MetaGenerator {
   }
 
   #validUrl(faviconUrl = null) {
-    if (faviconUrl === null) return "/favicon.png";
+    // [base-path] Fallback to the local favicon under BASE_PATH so the icon
+    // still loads when an admin clears or breaks the custom favicon URL.
+    if (faviconUrl === null) return joinBase("/favicon.png");
     try {
       const url = new URL(faviconUrl);
       return url.toString();
     } catch {
-      return "/favicon.png";
+      return joinBase("/favicon.png");
     }
   }
 
@@ -304,6 +327,11 @@ class MetaGenerator {
    */
   async generate(response, code = 200) {
     if (this.#customConfig === null) await this.#fetchConfg();
+    // [base-path] index.js/index.css are produced by Vite and copied into
+    // server/public; with BASE_PATH set, express.static serves them at
+    // "/ia/index.js" etc., so the references here MUST be prefixed.
+    const indexJs = joinBase("/index.js");
+    const indexCss = joinBase("/index.css");
     response.status(code).send(`
        <!DOCTYPE html>
         <html lang="en">
@@ -311,8 +339,8 @@ class MetaGenerator {
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             ${this.#assembleMeta()}
-            <script type="module" crossorigin src="/index.js"></script>
-            <link rel="stylesheet" href="/index.css">
+            <script type="module" crossorigin src="${indexJs}"></script>
+            <link rel="stylesheet" href="${indexCss}">
           </head>
           <body>
             <div id="root" class="h-screen"></div>
@@ -337,13 +365,16 @@ class MetaGenerator {
         null
       );
 
-      let iconUrl = "/favicon.png";
+      // [base-path] Fall back to the prefixed favicon path; only keep the
+      // admin-provided URL untouched when it is a fully-qualified URL
+      // (otherwise it would not resolve under the sub-path).
+      let iconUrl = joinBase("/favicon.png");
       if (faviconURL) {
         try {
           new URL(faviconURL);
           iconUrl = faviconURL;
         } catch {
-          iconUrl = "/favicon.png";
+          iconUrl = joinBase("/favicon.png");
         }
       }
 
@@ -352,7 +383,10 @@ class MetaGenerator {
         short_name: manifestName,
         display: "standalone",
         orientation: "portrait",
-        start_url: "/",
+        // [base-path] PWA `start_url` controls where the installed app opens.
+        // Without the prefix, an installed PWA would land on the domain root
+        // and miss the AnythingLLM container entirely.
+        start_url: PWA_START_URL,
         icons: [
           {
             src: iconUrl,

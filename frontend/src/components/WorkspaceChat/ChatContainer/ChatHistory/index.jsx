@@ -18,7 +18,7 @@ import debounce from "lodash.debounce";
 import Chartable from "./Chartable";
 import Workspace from "@/models/workspace";
 import { useParams } from "react-router-dom";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import Appearance from "@/models/appearance";
 import useTextSize from "@/hooks/useTextSize";
 import useChatHistoryScrollHandle from "@/hooks/useChatHistoryScrollHandle";
@@ -169,9 +169,9 @@ export default forwardRef(function (
       threadSlug,
       chatId
     );
-    window.location.href = paths.workspace.thread(
-      workspace.slug,
-      newThreadSlug
+    // [base-path] withBase: bypasses React Router → must include BASE_URL.
+    window.location.href = withBase(
+      paths.workspace.thread(workspace.slug, newThreadSlug)
     );
   };
 

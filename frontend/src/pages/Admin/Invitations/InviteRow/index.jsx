@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { titleCase } from "text-case";
 import Admin from "@/models/admin";
 import { Trash } from "@phosphor-icons/react";
+import { withBase } from "@/utils/paths";
 
 export default function InviteRow({ invite }) {
   const rowRef = useRef(null);
@@ -22,8 +23,9 @@ export default function InviteRow({ invite }) {
   };
   const copyInviteLink = () => {
     if (!invite) return false;
+    // [base-path] withBase: invite link is sent externally → must include BASE.
     window.navigator.clipboard.writeText(
-      `${window.location.origin}/accept-invite/${invite.code}`
+      `${window.location.origin}${withBase(`/accept-invite/${invite.code}`)}`
     );
     setCopied(true);
   };

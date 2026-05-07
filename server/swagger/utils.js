@@ -1,11 +1,29 @@
 const fs = require("fs");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
+// [base-path] Swagger UI is mounted directly on `app`, so it bypasses the
+// apiRouter's BASE_PATH prefix. We need to prepend BASE_PATH manually here.
+const { joinBase } = require("../utils/basePath");
 
 function faviconUrl() {
   return process.env.NODE_ENV === "production"
     ? "/public/favicon.png"
     : "http://localhost:3000/public/favicon.png";
+}
+
+/**
+ * [base-path] Returns the swagger document with its `servers` field rewritten
+ * to point at the BASE_PATH-prefixed API. Without this, the "Try it out"
+ * buttons in the swagger UI would fire requests at `/api/...` instead of
+ * `/ia/api/...` and 404. We do NOT mutate the original JSON object so this
+ * stays a no-op for default deployments.
+ */
+function patchedSwaggerDocument() {
+  const swaggerDocument = require("./openapi.json");
+  return {
+    ...swaggerDocument,
+    servers: [{ url: joinBase("/api") }],
+  };
 }
 
 function useSwagger(app) {
@@ -15,7 +33,9 @@ function useSwagger(app) {
     );
     return;
   }
-  app.use("/api/docs", swaggerUi.serve);
+  // [base-path] Mount swagger UI under BASE_PATH (e.g. "/ia/api/docs").
+  const docsPath = joinBase("/api/docs");
+  app.use(docsPath, swaggerUi.serve);
   const options = {
     customCss: [
       fs.readFileSync(path.resolve(__dirname, "index.css")),
@@ -26,10 +46,9 @@ function useSwagger(app) {
   };
 
   if (process.env.NODE_ENV === "production") {
-    const swaggerDocument = require("./openapi.json");
     app.get(
-      "/api/docs",
-      swaggerUi.setup(swaggerDocument, {
+      docsPath,
+      swaggerUi.setup(patchedSwaggerDocument(), {
         ...options,
         customJsStr:
           'window.SWAGGER_DOCS_ENV = "production";\n\n' +
@@ -38,11 +57,10 @@ function useSwagger(app) {
     );
   } else {
     // we regenerate the html page only in development mode to ensure it is up-to-date when the code is hot-reloaded.
-    app.get("/api/docs", async (_, response) => {
+    app.get(docsPath, async (_, response) => {
       // #swagger.ignore = true
-      const swaggerDocument = require("./openapi.json");
       return response.send(
-        swaggerUi.generateHTML(swaggerDocument, {
+        swaggerUi.generateHTML(patchedSwaggerDocument(), {
           ...options,
           customJsStr:
             'window.SWAGGER_DOCS_ENV = "development";\n\n' +

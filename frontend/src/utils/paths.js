@@ -1,5 +1,33 @@
 import { API_BASE } from "./constants";
 
+/**
+ * [base-path] Public base path of the SPA, derived from Vite's `base` option
+ * (e.g. '/ia/'). Stripped of trailing slashes here so `withBase("/foo")` always
+ * yields a single-slash join. When no base is configured, BASE === "" and
+ * `withBase` is a no-op.
+ *
+ * IMPORTANT — DO NOT prefix the values returned by the path functions in the
+ * default export below. React Router's `basename` (configured in main.jsx)
+ * already auto-prepends the base to `<Link to>` / `useNavigate(...)` / data
+ * router APIs. Pre-prefixing here would cause double-prefixing
+ * (e.g. `/ia/ia/login`).
+ *
+ * `withBase()` is intended ONLY for callsites that bypass React Router and
+ * touch the URL bar directly: `window.location.href = ...`,
+ * `window.location.replace(...)`, `window.location = ...`, etc.
+ */
+const BASE = (import.meta.env.BASE_URL || "/").replace(/\/+$/, "");
+export const withBase = (path = "/") => {
+  if (!BASE || typeof path !== "string" || path.length === 0) return path;
+  // Pass through absolute URLs (http://, https://, //, mailto:, tel:, ...).
+  if (/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(path)) return path;
+  // Idempotent: avoid double-prefixing if the caller already passed a prefixed
+  // path. We compare on `BASE + "/"` to avoid matching `/ia2/...` when BASE is
+  // `/ia`.
+  if (path === BASE || path.startsWith(`${BASE}/`)) return path;
+  return `${BASE}${path.startsWith("/") ? path : `/${path}`}`;
+};
+
 function applyOptions(path, options = {}) {
   let updatedPath = path;
   if (!options || Object.keys(options).length === 0) return updatedPath;

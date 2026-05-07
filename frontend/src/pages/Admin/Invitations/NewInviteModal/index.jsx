@@ -3,6 +3,7 @@ import { X, Copy, Check } from "@phosphor-icons/react";
 import Admin from "@/models/admin";
 import Workspace from "@/models/workspace";
 import showToast from "@/utils/toast";
+import { withBase } from "@/utils/paths";
 
 export default function NewInviteModal({ closeModal, onSuccess }) {
   const [invite, setInvite] = useState(null);
@@ -28,8 +29,9 @@ export default function NewInviteModal({ closeModal, onSuccess }) {
 
   const copyInviteLink = () => {
     if (!invite) return false;
+    // [base-path] withBase: invite link is sent externally → must include BASE.
     window.navigator.clipboard.writeText(
-      `${window.location.origin}/accept-invite/${invite.code}`
+      `${window.location.origin}${withBase(`/accept-invite/${invite.code}`)}`
     );
     setCopied(true);
     showToast("Invite link copied to clipboard", "success", {
@@ -90,7 +92,8 @@ export default function NewInviteModal({ closeModal, onSuccess }) {
                 <div className="relative">
                   <input
                     type="url"
-                    defaultValue={`${window.location.origin}/accept-invite/${invite.code}`}
+                    /* [base-path] withBase: invite link is shared externally → must include BASE. */
+                    defaultValue={`${window.location.origin}${withBase(`/accept-invite/${invite.code}`)}`}
                     disabled={true}
                     className="border-none bg-theme-settings-input-bg text-white placeholder:text-theme-settings-input-placeholder text-sm rounded-lg outline-none block w-full p-2.5 pr-10"
                   />

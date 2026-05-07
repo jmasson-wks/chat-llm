@@ -2,7 +2,7 @@ import React from "react";
 import PasswordModal, { usePasswordModal } from "@/components/Modals/Password";
 import { FullScreenLoader } from "@/components/Preloader";
 import { Navigate } from "react-router-dom";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import useQuery from "@/hooks/useQuery";
 import useSimpleSSO from "@/hooks/useSimpleSSO";
 
@@ -25,7 +25,11 @@ export default function Login() {
   if (ssoConfig.enabled && ssoConfig.noLogin) {
     // If a noLoginRedirect is provided and no token is provided, redirect to that webpage.
     if (!!ssoConfig.noLoginRedirect && !query.has("token"))
-      return window.location.replace(ssoConfig.noLoginRedirect);
+      // [base-path] noLoginRedirect is admin-configured and is typically an
+      // external URL, but withBase() passes absolute URLs through unchanged
+      // — so this wrapper is a no-op in the common case yet handles the
+      // edge case of an internal relative path correctly.
+      return window.location.replace(withBase(ssoConfig.noLoginRedirect));
     // Otherwise, redirect to the SSO login page.
     else return <Navigate to={paths.sso.login()} />;
   }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Info, CaretDown, CaretUp } from "@phosphor-icons/react";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import System from "@/models/system";
 import PreLoader from "@/components/Preloader";
 import { LOCALAI_COMMON_URLS } from "@/utils/constants";
@@ -34,7 +34,8 @@ export default function LocalAiOptions({ settings, showAlert = false }) {
             </p>
           </div>
           <a
-            href={paths.settings.embedder.modelPreference()}
+            // [base-path] withBase: <a href> bypasses React Router basename
+            href={withBase(paths.settings.embedder.modelPreference())}
             className="text-sm md:text-base my-2 underline"
           >
             Manage embedding &rarr;

@@ -1,5 +1,5 @@
 import Workspace from "@/models/workspace";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import showToast from "@/utils/toast";
 import { Plus, CircleNotch, Trash } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
@@ -93,7 +93,8 @@ export default function ThreadContainer({
 
     // Only redirect if current thread is being deleted
     if (slugs.includes(threadSlug)) {
-      window.location.href = paths.workspace.chat(workspace.slug);
+      // [base-path] withBase: bypasses React Router → must include BASE_URL.
+      window.location.href = withBase(paths.workspace.chat(workspace.slug));
     }
   };
 
@@ -182,8 +183,9 @@ function NewThreadButton({ workspace }) {
       setLoading(false);
       return;
     }
+    // [base-path] withBase: bypasses React Router → must include BASE_URL.
     window.location.replace(
-      paths.workspace.thread(workspace.slug, thread.slug)
+      withBase(paths.workspace.thread(workspace.slug, thread.slug))
     );
   };
 

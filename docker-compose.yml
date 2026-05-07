@@ -1,0 +1,37 @@
+services:
+  anythingllm:
+    image: mintplexlabs/anythingllm:1.12.1
+    container_name: anythingllm
+    ports:
+    - "3001:3001"
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - STORAGE_DIR=/app/server/storage
+      - JWT_SECRET=${JWT_SECRET}
+      - LLM_PROVIDER=azure
+      #- AZURE_OPENAI_ENDPOINT=https://gbau-mh30jfbd-eastus2.cognitiveservices.azure.com/
+      #- AZURE_OPENAI_TOKEN_LIMIT=128000
+      #- AZURE_OPENAI_KEY=your_old_azure_openai_key
+      #- AZURE_OPENAI_MODEL_PREF=gpt-5-chat
+      - AZURE_OPENAI_ENDPOINT=https://isilog-foundry-hub-openai.openai.azure.com/
+      - AZURE_OPENAI_TOKEN_LIMIT=200000
+      - AZURE_OPENAI_KEY=${AZURE_OPENAI_KEY}
+      - AZURE_OPENAI_MODEL_PREF=gpt-5.3-chat
+      - AZURE_OPENAI_MODEL_TYPE=reasoning
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - MISTRAL_MODEL_PREF=mistral-large-latest
+      - ANYTHINGLLM_MODEL_PREF=mistral-large-3:675b-cloud
+      - EMBEDDING_ENGINE=native
+      - AGENT_SKILL_RERANKER_ENABLED=true
+      - VECTOR_DB=lancedb
+      - WHISPER_PROVIDER=local
+      - TTS_PROVIDER=native
+      - PASSWORDMINCHAR=8
+      - DISABLE_TELEMETRY=true
+      - COLLECTOR_PORT=8888
+      - SIG_KEY=${SIG_KEY}
+      - SIG_SALT=${SIG_SALT}
+    volumes:
+      - /mnt/d/containers/anythingllm:/app/server/storage
+    restart: always

@@ -6,7 +6,7 @@ import {
   CircleNotch,
   Warning,
 } from "@phosphor-icons/react";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import System from "@/models/system";
 import { LMSTUDIO_COMMON_URLS } from "@/utils/constants";
 import useProviderEndpointAutoDiscovery from "@/hooks/useProviderEndpointAutoDiscovery";
@@ -48,7 +48,8 @@ export default function LMStudioOptions({ settings, showAlert = false }) {
             </p>
           </div>
           <a
-            href={paths.settings.embedder.modelPreference()}
+            // [base-path] withBase: <a href> bypasses React Router basename
+            href={withBase(paths.settings.embedder.modelPreference())}
             className="text-sm md:text-base my-2 underline"
           >
             Manage embedding &rarr;

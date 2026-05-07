@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import System from "../../../models/system";
 import { AUTH_TOKEN, AUTH_USER } from "../../../utils/constants";
-import paths from "../../../utils/paths";
+import paths, { withBase } from "../../../utils/paths";
 import showToast from "@/utils/toast";
 import ModalWrapper from "@/components/ModalWrapper";
 import { useModal } from "@/hooks/useModal";
@@ -207,7 +207,8 @@ export default function MultiUserAuth() {
       } else {
         window.localStorage.setItem(AUTH_USER, JSON.stringify(user));
         window.localStorage.setItem(AUTH_TOKEN, token);
-        window.location = paths.home();
+        // [base-path] withBase: bypasses React Router → must include BASE_URL.
+        window.location = withBase(paths.home());
       }
     } else {
       setError(message);
@@ -259,7 +260,8 @@ export default function MultiUserAuth() {
     if (downloadComplete && user && token) {
       window.localStorage.setItem(AUTH_USER, JSON.stringify(user));
       window.localStorage.setItem(AUTH_TOKEN, token);
-      window.location = paths.home();
+      // [base-path] withBase: bypasses React Router → must include BASE_URL.
+      window.location = withBase(paths.home());
     }
   }, [downloadComplete, user, token]);
 

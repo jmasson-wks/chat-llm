@@ -9,6 +9,11 @@ dns.setDefaultResultOrder("verbatim")
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // [base-path] Public base URL injected at build time (default '/' = no subpath).
+  // Vite REQUIRES a trailing slash; the Dockerfile passes BASE_PATH=/ia/.
+  // This value is propagated to `import.meta.env.BASE_URL` and is used to prefix
+  // all generated assets (<script src>, <link href>, dynamic imports...).
+  base: process.env.VITE_BASE_URL || '/',
   assetsInclude: [
     './public/piper/ort-wasm-simd-threaded.wasm',
     './public/piper/piper_phonemize.wasm',

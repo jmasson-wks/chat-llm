@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Invite from "@/models/invite";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import { useParams } from "react-router-dom";
 import { AUTH_TOKEN, AUTH_USER } from "@/utils/constants";
 import System from "@/models/system";
@@ -28,7 +28,8 @@ export default function NewUserModal() {
       if (valid && !!token && !!user) {
         window.localStorage.setItem(AUTH_USER, JSON.stringify(user));
         window.localStorage.setItem(AUTH_TOKEN, token);
-        window.location = paths.home();
+        // [base-path] withBase: bypasses React Router → must include BASE_URL.
+        window.location = withBase(paths.home());
       } else {
         setError(message);
       }

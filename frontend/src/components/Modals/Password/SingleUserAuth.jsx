@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import System from "../../../models/system";
 import { AUTH_TOKEN } from "../../../utils/constants";
-import paths from "../../../utils/paths";
+import paths, { withBase } from "../../../utils/paths";
 import ModalWrapper from "@/components/ModalWrapper";
 import { useModal } from "@/hooks/useModal";
 import RecoveryCodeModal from "@/components/Modals/DisplayRecoveryCodeModal";
@@ -38,7 +38,8 @@ export default function SingleUserAuth() {
         openRecoveryCodeModal();
       } else {
         window.localStorage.setItem(AUTH_TOKEN, token);
-        window.location = paths.home();
+        // [base-path] withBase: bypasses React Router → must include BASE_URL.
+        window.location = withBase(paths.home());
       }
     } else {
       setError(message);
@@ -54,7 +55,8 @@ export default function SingleUserAuth() {
   useEffect(() => {
     if (downloadComplete && token) {
       window.localStorage.setItem(AUTH_TOKEN, token);
-      window.location = paths.home();
+      // [base-path] withBase: bypasses React Router → must include BASE_URL.
+      window.location = withBase(paths.home());
     }
   }, [downloadComplete, token]);
 

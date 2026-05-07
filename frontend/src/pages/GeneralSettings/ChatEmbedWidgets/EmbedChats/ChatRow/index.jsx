@@ -2,7 +2,7 @@ import truncate from "truncate";
 import { X } from "@phosphor-icons/react";
 import ModalWrapper from "@/components/ModalWrapper";
 import { useModal } from "@/hooks/useModal";
-import paths from "@/utils/paths";
+import paths, { withBase } from "@/utils/paths";
 import Embed from "@/models/embed";
 import MarkdownRenderer from "../MarkdownRenderer";
 import { safeJsonParse } from "@/utils/request";
@@ -40,7 +40,8 @@ export default function ChatRow({ chat, onDelete }) {
       <tr className="bg-transparent text-white text-opacity-80 text-xs font-medium border-b border-white/10 h-10">
         <td className="px-6 font-medium whitespace-nowrap text-white">
           <a
-            href={paths.settings.embedChatWidgets()}
+            // [base-path] withBase: <a href> bypasses React Router basename
+            href={withBase(paths.settings.embedChatWidgets())}
             target="_blank"
             rel="noreferrer"
             className="text-white flex items-center hover:underline"
