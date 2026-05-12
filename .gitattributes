@@ -1,1 +1,9 @@
 * text=auto eol=lf
+
+# --- Fork-specific: PostgreSQL Prisma migrations -----------------------------
+# Ce fork utilise PostgreSQL alors que l'upstream (Mintplex/AnythingLLM) utilise
+# SQLite. On conserve TOUJOURS notre lignée de migrations Postgres lors d'un
+# rebase/merge sur upstream. Voir docs/README.md (section "Workflow de rebase
+# sur l'upstream") pour le workflow complet.
+server/prisma/migrations/**                  merge=ours
+server/prisma/migrations/migration_lock.toml merge=ours

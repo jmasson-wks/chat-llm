@@ -11,8 +11,8 @@ generator client {
 //   url      = env("DATABASE_URL")
 // }
 datasource db {
-  provider = "sqlite"
-  url      = "file:../storage/anythingllm.db"
+  provider = "postgresql"
+  url      = env("DATABASE_CONNECTION_STRING")
 }
 
 model api_keys {

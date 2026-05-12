@@ -3,6 +3,10 @@
 **/server/storage/vector-cache/**
 **/server/storage/*.db
 **/server/storage/lancedb
+# Fork-specific: ne pas embarquer les sauvegardes de migrations SQLite
+# d'origine upstream dans l'image (cf. docs/README.md, section rebase).
+**/server/prisma/migrations.sqlite.bak/**
+**/server/prisma/migrations.*.bak/**
 **/collector/hotdir/**
 **/collector/outputs/**
 **/node_modules/

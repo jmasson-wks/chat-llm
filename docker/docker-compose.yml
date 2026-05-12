@@ -32,6 +32,7 @@ services:
     # keep the canonical form to make logs less noisy.
     environment:
       - BASE_PATH=/ia
+      - DATABASE_CONNECTION_STRING=${DATABASE_CONNECTION_STRING}
     # [base-path] Bind to the loopback interface only — the container is
     # reachable from IIS (running on the same host) but not from anywhere
     # else. Combined with the IIS reverse proxy, this means the only public
@@ -45,5 +46,65 @@ services:
       - anything-llm
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      qdrant:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
+  # Init container: creates the Postgres data directory on the host (bind mount
+  # source) with the correct ownership (uid/gid 999 = `postgres` user inside the
+  # official postgres:15-alpine image) and strict permissions (0700).
+  # Runs once and exits; Postgres waits for it to complete successfully.
+  # Reuses the postgres image to avoid pulling an extra image (alpine).
+  postgres-init:
+    image: postgres:15-alpine
+    container_name: anythingllm-postgres-init
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /data && \
+        chown -R 999:999 /data && \
+        chmod 700 /data
+    volumes:
+      - "${POSTGRES_DATA_DIR:-/home/jmas/nautilusllm/postgres}:/data"
+    restart: "no"
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: anythingllm-postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - "${POSTGRES_DATA_DIR:-/home/jmas/nautilusllm/postgres}:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+    networks:
+      - anything-llm
+    restart: unless-stopped
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: anythingllm-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - "/mnt/d/containers/anythingllm/qdrant:/qdrant/storage"
+    networks:
+      - anything-llm
+    restart: unless-stopped

@@ -24,7 +24,8 @@ services:
       - ANYTHINGLLM_MODEL_PREF=mistral-large-3:675b-cloud
       - EMBEDDING_ENGINE=native
       - AGENT_SKILL_RERANKER_ENABLED=true
-      - VECTOR_DB=lancedb
+      - VECTOR_DB=qdrant
+      - QDRANT_ENDPOINT=http://qdrant:6333
       - WHISPER_PROVIDER=local
       - TTS_PROVIDER=native
       - PASSWORDMINCHAR=8
@@ -34,4 +35,15 @@ services:
       - SIG_SALT=${SIG_SALT}
     volumes:
       - /mnt/d/containers/anythingllm:/app/server/storage
+    depends_on:
+      - qdrant
+    restart: always
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: anythingllm-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - /mnt/d/containers/anythingllm/qdrant:/qdrant/storage
     restart: always
