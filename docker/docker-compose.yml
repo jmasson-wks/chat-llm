@@ -36,8 +36,8 @@ services:
     # [base-path] Bind to the loopback interface only — the container is
     # reachable from IIS (running on the same host) but not from anywhere
     # else. Combined with the IIS reverse proxy, this means the only public
-    # entry point is HTTPS via the FQDN. Change to "3001:3001" if you want
-    # the container to be directly reachable on the LAN.
+    # entry point is HTTPS via the FQDN. IIS must now target the BFF on 3003.
+    # Keep this mapping for local/debug access only.
     ports:
       - "127.0.0.1:3001:3001"
     env_file:
@@ -52,6 +52,24 @@ services:
         condition: service_started
       postgres:
         condition: service_healthy
+
+  bff-oidc:
+    container_name: nautilusllm-bff
+    build:
+      context: ../bff
+      dockerfile: Dockerfile
+    env_file:
+      - ./bff.env
+    ports:
+      - "3003:3003"
+    networks:
+      - anything-llm
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      anything-llm:
+        condition: service_started
+    restart: unless-stopped
 
   # Init container: creates the Postgres data directory on the host (bind mount
   # source) with the correct ownership (uid/gid 999 = `postgres` user inside the

@@ -1,0 +1,22 @@
+{
+  "name": "anythingllm-bff-oidc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OIDC BFF reverse proxy for AnythingLLM",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cookie-session": "^2.1.1",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "http-proxy-middleware": "^3.0.5",
+    "openid-client": "^5.7.1",
+    "pino": "^9.7.0",
+    "zod": "^3.25.76"
+  }
+}

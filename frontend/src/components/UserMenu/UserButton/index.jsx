@@ -2,7 +2,7 @@ import useLoginMode from "@/hooks/useLoginMode";
 import usePfp from "@/hooks/usePfp";
 import useUser from "@/hooks/useUser";
 import System from "@/models/system";
-import paths, { withBase } from "@/utils/paths";
+import { withBase } from "@/utils/paths";
 import { userFromStorage } from "@/utils/request";
 import { Person } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
@@ -99,8 +99,7 @@ export default function UserButton() {
                 window.localStorage.removeItem(AUTH_TIMESTAMP);
                 window.localStorage.removeItem(LAST_VISITED_WORKSPACE);
                 window.localStorage.removeItem(USER_PROMPT_INPUT_MAP);
-                // [base-path] withBase: bypasses React Router → must include BASE_URL.
-                window.location.replace(withBase(paths.home()));
+                window.location.replace(withBase("/auth/logout"));
               }}
               type="button"
               className="text-white hover:bg-theme-action-menu-item-hover w-full text-left px-4 py-1.5 rounded-md"

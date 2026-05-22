@@ -18,19 +18,18 @@ and rebuild the image. The IIS rule below also has to be updated to match.
 ## 1. Architecture
 
 ```
-Browser ──HTTPS──► IIS  ──HTTP loopback──►  Docker container
-        /ia/...     │      127.0.0.1:3001     /ia/api/...
-                    │      /ia/...             /ia/index.js
-                    └─ URL Rewrite + ARR        /ia/index.css
+Browser ──HTTPS──► IIS  ──HTTP loopback──►  BFF OIDC
+        /ia/...     │      127.0.0.1:3003     /ia/api/...
+                    │                          /ia/index.js
+                    └─ URL Rewrite + ARR
                        (pass-through)
 ```
 
-- The container binds to `127.0.0.1:3001` (see `docker-compose.yml`,
-  `ports: "127.0.0.1:3001:3001"`). It is **not** reachable from outside the
-  host — only IIS, running locally, can talk to it.
-- IIS rewrites any incoming `/ia(/...)` request to `http://127.0.0.1:3001/ia$1`,
-  preserving the path, query string and HTTP method. ARR forwards the response
-  body untouched.
+- IIS now targets the BFF at `127.0.0.1:3003` (see `docker-compose.yml`,
+  `bff-oidc` service with `ports: "127.0.0.1:3003:3003"`).
+- The BFF proxies validated traffic to AnythingLLM internally (`anything-llm:3001`).
+- IIS rewrites any incoming `/ia(/...)` request to `http://127.0.0.1:3003/ia$1`,
+  preserving path, query string and HTTP method. ARR forwards response bodies untouched.
 - The frontend bundle, the API and the agent WebSocket are all served from
   the same origin (`/ia/...`), so there is no CORS to configure.
 
@@ -127,7 +126,7 @@ the site (and any other `/appX` apps) keeps working unchanged.
       <rule name="AnythingLLM /ia reverse proxy" stopProcessing="true">
         <match url="^ia(/.*)?$" />
         <action type="Rewrite"
-                url="http://127.0.0.1:3001/ia{R:1}"
+                url="http://127.0.0.1:3003/ia{R:1}"
                 appendQueryString="true"
                 logRewrittenUrl="true" />
       </rule>
@@ -143,11 +142,13 @@ Notes:
   `/ia` directly thanks to `app.use("/ia", ...)`.
 - `appendQueryString="true"` is mandatory — without it, login redirects with
   `?redirectTo=...` lose their query string.
+- Forward `X-Forwarded-Proto: https` so the BFF can enforce secure cookies
+  correctly when `BFF_TRUST_PROXY=true`.
 - **No `outbound` rule** is needed. The container already produces correct
   HTML/JS references.
 
 If you prefer the GUI: IIS Manager → site → *URL Rewrite* → *Add Rule(s)…* →
-*Reverse Proxy*. Set inbound rule URL to `http://127.0.0.1:3001/`, then edit
+*Reverse Proxy*. Set inbound rule URL to `http://127.0.0.1:3003/`, then edit
 the generated rule to match the pattern above.
 
 ## 4. ARR proxy settings (streaming + WebSocket)
@@ -202,24 +203,20 @@ Troubleshooting heuristics:
 
 ## 5. Post-install verification
 
-From the IIS host, with the container running (`docker compose up -d` from
-`docker/`), the following should all succeed:
+From the IIS host, with the stack running (`docker compose up -d` from `docker/`),
+the following should all succeed:
 
 ```powershell
-# 1. The container itself responds on /ia/
-curl.exe -i http://127.0.0.1:3001/ia/
+# 1. The BFF responds on /ia/healthz
+curl.exe -i http://127.0.0.1:3003/ia/healthz
 
-# 2. The static bundle is served at /ia/index.js
-curl.exe -I http://127.0.0.1:3001/ia/index.js
+# 2. BFF redirects unauthenticated traffic to OIDC login
+curl.exe -I http://127.0.0.1:3003/ia/
 
-# 3. The API is reachable under /ia/api/
+# 3. The internal app remains reachable locally on 3001 (debug only)
 curl.exe -i http://127.0.0.1:3001/ia/api/ping
 
-# 4. The root URL redirects to /ia/
-curl.exe -I http://127.0.0.1:3001/
-# Expected: HTTP/1.1 302 Found, Location: /ia/
-
-# 5. The OLD path is now a 404 (as intended)
+# 4. The OLD path is still a 404 on AnythingLLM (as intended)
 curl.exe -i http://127.0.0.1:3001/api/ping
 # Expected: HTTP/1.1 404 Not Found
 ```
@@ -237,13 +234,13 @@ direct-to-container response with the through-IIS response. Both MUST answer
 `HTTP/1.1 101 Switching Protocols`:
 
 ```powershell
-# 1. Directly against the container (bypasses IIS). If this fails, the bug is
-#    in the app/container, not IIS.
+# 1. Directly against the BFF (bypasses IIS). If this fails, the bug is
+#    in BFF/container, not IIS.
 curl.exe -i -N --http1.1 `
   -H "Connection: Upgrade" -H "Upgrade: websocket" `
   -H "Sec-WebSocket-Version: 13" `
   -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" `
-  http://127.0.0.1:3001/ia/api/agent-invocation/probe
+  http://127.0.0.1:3003/ia/api/agent-invocation/probe
 
 # 2. Through IIS/ARR. If (1) gives 101 but this does not, the bug is in the
 #    IIS configuration (WebSocket feature, pool mode, or ARR buffering — see
